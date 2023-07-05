@@ -6,11 +6,11 @@ import {
   Delete,
   Param,
   Body,
-} from '@nestjs/common';
-import { UserService } from './user.service';
-import { User } from './schemas/user.schema';
+} from "@nestjs/common";
+import { UserService } from "./user.service";
+import { User } from "./schemas/user.schema";
 
-@Controller('users')
+@Controller("users")
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -24,21 +24,21 @@ export class UserController {
     return this.userService.getUsers();
   }
 
-  @Get(':id')
-  async getUserById(@Param('id') userId: string): Promise<User> {
+  @Get(":id")
+  async getUserById(@Param("id") userId: string): Promise<User> {
     return this.userService.getUserById(userId);
   }
 
-  @Put(':id')
+  @Put(":id")
   async updateUser(
-    @Param('id') userId: string,
-    @Body() userData,
+    @Param("id") userId: string,
+    @Body() userData
   ): Promise<User> {
     return this.userService.updateUser(userId, userData);
   }
 
-  @Delete(':id')
-  async deleteUser(@Param('id') userId: string): Promise<User> {
+  @Delete(":id")
+  async deleteUser(@Param("id") userId: string): Promise<User> {
     return this.userService.deleteUser(userId);
   }
 }

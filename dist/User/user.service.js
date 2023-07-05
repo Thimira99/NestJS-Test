@@ -22,21 +22,23 @@ let UserService = exports.UserService = class UserService {
     constructor(userModel) {
         this.userModel = userModel;
     }
+    async startSession() {
+        const session = await this.userModel.db.startSession();
+        return session;
+    }
     async createUser(userData) {
-        const session = await (0, mongoose_3.startSession)();
-        session.startTransaction();
         try {
+            const session = await this.startSession();
+            session.startTransaction();
             const createdUser = new this.userModel(userData);
             await createdUser.save({ session });
             await session.commitTransaction();
+            session.endSession();
             return createdUser;
         }
         catch (error) {
-            await session.abortTransaction();
+            console.error("Error creating user:", error);
             throw error;
-        }
-        finally {
-            session.endSession();
         }
     }
     async getUsers() {
