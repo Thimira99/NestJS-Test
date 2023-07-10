@@ -6,10 +6,10 @@ import { UserModule } from "./User/user.module";
 
 @Module({
   imports: [
+    UserModule,
     MongooseModule.forRoot(
       "mongodb+srv://thimira:1111@new.m5idioa.mongodb.net/"
     ),
-    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

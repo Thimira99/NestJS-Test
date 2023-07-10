@@ -1,75 +1,59 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, ClientSession } from "mongoose";
 import { User } from "./schemas/user.schema";
-import { startSession } from "mongoose";
+import { Connection } from "mongoose";
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
-  //
-  async startSession() {
-    const session = await this.userModel.db.startSession();
-    return session;
-  }
-  //
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @Inject("DB_SESSION") private session: ClientSession
+  ) {}
+
   async createUser(userData): Promise<User> {
     try {
-      const session = await this.startSession();
-      session.startTransaction();
-
       const createdUser = new this.userModel(userData);
-      await createdUser.save({ session });
-      await session.commitTransaction();
-
-      session.endSession();
-
+      await createdUser.save({ session: this.session });
       return createdUser;
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;
     }
   }
-  //
+
   async getUsers(): Promise<User[]> {
     return this.userModel.find().exec();
   }
-  //
+
   async getUserById(userId: string): Promise<User> {
     return this.userModel.findById(userId).exec();
   }
-  //
+
   async updateUser(userId: string, userData): Promise<User> {
-    const session = await startSession();
-    session.startTransaction();
     try {
       const updatedUser = await this.userModel
-        .findByIdAndUpdate(userId, userData, { new: true, session })
+        .findByIdAndUpdate(userId, userData, {
+          new: true,
+          session: this.session,
+        })
         .exec();
-      await session.commitTransaction();
       return updatedUser;
     } catch (error) {
-      await session.abortTransaction();
+      console.error("Error updating user:", error);
       throw error;
-    } finally {
-      session.endSession();
     }
   }
-  //
+
   async deleteUser(userId: string): Promise<User> {
-    const session = await startSession();
-    session.startTransaction();
     try {
       const deletedUser = await this.userModel
-        .findByIdAndRemove(userId, { session })
+        .findByIdAndRemove(userId, { session: this.session })
         .exec();
-      await session.commitTransaction();
       return deletedUser;
     } catch (error) {
-      await session.abortTransaction();
+      console.error("Error deleting user:", error);
       throw error;
-    } finally {
-      session.endSession();
     }
   }
 }

@@ -17,23 +17,15 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const user_schema_1 = require("./schemas/user.schema");
-const mongoose_3 = require("mongoose");
 let UserService = exports.UserService = class UserService {
-    constructor(userModel) {
+    constructor(userModel, session) {
         this.userModel = userModel;
-    }
-    async startSession() {
-        const session = await this.userModel.db.startSession();
-        return session;
+        this.session = session;
     }
     async createUser(userData) {
         try {
-            const session = await this.startSession();
-            session.startTransaction();
             const createdUser = new this.userModel(userData);
-            await createdUser.save({ session });
-            await session.commitTransaction();
-            session.endSession();
+            await createdUser.save({ session: this.session });
             return createdUser;
         }
         catch (error) {
@@ -48,45 +40,37 @@ let UserService = exports.UserService = class UserService {
         return this.userModel.findById(userId).exec();
     }
     async updateUser(userId, userData) {
-        const session = await (0, mongoose_3.startSession)();
-        session.startTransaction();
         try {
             const updatedUser = await this.userModel
-                .findByIdAndUpdate(userId, userData, { new: true, session })
+                .findByIdAndUpdate(userId, userData, {
+                new: true,
+                session: this.session,
+            })
                 .exec();
-            await session.commitTransaction();
             return updatedUser;
         }
         catch (error) {
-            await session.abortTransaction();
+            console.error("Error updating user:", error);
             throw error;
-        }
-        finally {
-            session.endSession();
         }
     }
     async deleteUser(userId) {
-        const session = await (0, mongoose_3.startSession)();
-        session.startTransaction();
         try {
             const deletedUser = await this.userModel
-                .findByIdAndRemove(userId, { session })
+                .findByIdAndRemove(userId, { session: this.session })
                 .exec();
-            await session.commitTransaction();
             return deletedUser;
         }
         catch (error) {
-            await session.abortTransaction();
+            console.error("Error deleting user:", error);
             throw error;
-        }
-        finally {
-            session.endSession();
         }
     }
 };
 exports.UserService = UserService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __param(1, (0, common_1.Inject)("DB_SESSION")),
+    __metadata("design:paramtypes", [mongoose_2.Model, Object])
 ], UserService);
 //# sourceMappingURL=user.service.js.map
